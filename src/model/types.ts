@@ -36,6 +36,8 @@ export interface StatusSession {
   bleeding: Record<Fdi, PbToothData>;
   caries: Record<Fdi, CariesToothData>;
   fillings: Record<Fdi, FillingToothData>;
+  /** Fissure sealant present on the tooth (zalitje fisur) — whole tooth, yes/no. */
+  sealants: Record<Fdi, boolean>;
 }
 
 /** What the landing list shows about a locally stored session. */

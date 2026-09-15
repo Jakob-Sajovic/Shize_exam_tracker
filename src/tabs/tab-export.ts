@@ -1,10 +1,12 @@
 import { TabController } from "../app/tab-manager";
 import { SessionState, summarize } from "../model/session";
 import { Store } from "../storage/store";
+import { openReport } from "../report/report";
 
 export class ExportTab implements TabController {
   private panel: HTMLElement | null = null;
   private saveBtn: HTMLButtonElement | null = null;
+  private reportBtn: HTMLButtonElement | null = null;
   private statusEl: HTMLElement | null = null;
 
   constructor(private session: SessionState, private store: Store) {}
@@ -17,9 +19,11 @@ export class ExportTab implements TabController {
         <div id="export-summary"></div>
         <div id="export-status" class="export-status"></div>
         <button type="button" id="btn-save" class="btn btn-primary btn-large">💾 Shrani in izvozi (.xlsx)</button>
+        <button type="button" id="btn-report" class="btn btn-secondary btn-large btn-report">📄 Poročilo (PDF)</button>
         <p class="tab-help">
-          Pregled se med vnašanjem samodejno shranjuje v napravo. S tem gumbom prenesete
-          datoteko .xlsx — eno vrstico na pregled, primerno za nadaljnjo obdelavo.
+          Pregled se med vnašanjem samodejno shranjuje v napravo. Zgornji gumb prenese
+          datoteko .xlsx — eno vrstico na pregled, primerno za nadaljnjo obdelavo. Spodnji odpre
+          poročilo za tiskanje; v oknu za tiskanje izberite <strong>Shrani kot PDF</strong>.
         </p>
       </div>
     `;
@@ -27,6 +31,8 @@ export class ExportTab implements TabController {
     this.saveBtn = panel.querySelector("#btn-save") as HTMLButtonElement;
     this.statusEl = panel.querySelector("#export-status") as HTMLElement;
     this.saveBtn.addEventListener("click", () => void this.handleSave());
+    this.reportBtn = panel.querySelector("#btn-report") as HTMLButtonElement;
+    this.reportBtn.addEventListener("click", () => this.handleReport());
   }
 
   onActivate(): void {
@@ -54,6 +60,16 @@ export class ExportTab implements TabController {
     }
   }
 
+  private handleReport(): void {
+    if (!this.session.hasSession()) return;
+    try {
+      openReport(this.session.get());
+      this.setStatus("Poročilo je odprto v novem oknu. V oknu za tiskanje izberite »Shrani kot PDF«.", "ok");
+    } catch (err) {
+      this.setStatus(`Napaka: ${err instanceof Error ? err.message : String(err)}`, "warn");
+    }
+  }
+
   private setStatus(text: string, kind: "ok" | "warn" | "muted"): void {
     if (!this.statusEl) return;
     this.statusEl.textContent = text;
@@ -67,9 +83,11 @@ export class ExportTab implements TabController {
     if (!this.session.hasSession()) {
       host.innerHTML = `<p class="placeholder-text">Ni aktivnega pregleda.</p>`;
       if (this.saveBtn) this.saveBtn.disabled = true;
+      if (this.reportBtn) this.reportBtn.disabled = true;
       return;
     }
     if (this.saveBtn) this.saveBtn.disabled = false;
+    if (this.reportBtn) this.reportBtn.disabled = false;
 
     const s = this.session.get();
     const sum = summarize(s);
@@ -101,6 +119,7 @@ export class ExportTab implements TabController {
         ["Ploskve z zalivko", String(sum.fillingSurfaces)],
         ["Kompozit", String(sum.fillingComposite)],
         ["Amalgam", String(sum.fillingAmalgam)],
+        ["Zalitje fisur (zobje)", String(sum.sealedTeeth)],
       ]);
   }
 }

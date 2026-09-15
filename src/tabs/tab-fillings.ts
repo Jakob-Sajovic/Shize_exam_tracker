@@ -36,6 +36,24 @@ export class FillingsTab implements TabController {
           Izberite material in tapnite ploskev. Ponoven tap na ploskev z istim materialom jo izbriše.
           Ocenjuje se pet ploskev na zob, vključno z <strong>okluzalno</strong> (sredina).
         </p>
+
+        <div class="sub-section">
+          <div class="tab-head">
+            <h2>Zalitje fisur</h2>
+            <button type="button" class="btn btn-danger-outline btn-sm" id="seal-reset">Ponastavi</button>
+          </div>
+          <div class="count-bar" id="seal-score"></div>
+          <div id="seal-chart"></div>
+          <div class="legend">
+            <span class="legend-item"><span class="legend-swatch marked"></span> zalito</span>
+            <span class="legend-item"><span class="legend-swatch unmarked"></span> ni zalito</span>
+            <span class="legend-item"><span class="legend-swatch absent"></span> manjka</span>
+          </div>
+          <p class="tab-help">
+            Tapnite zob z zalitimi fisurami — obarva se zeleno. Ponoven tap oznako odstrani.
+            Manjkajočih zob ni mogoče označiti.
+          </p>
+        </div>
       </div>
     `;
 
@@ -48,6 +66,10 @@ export class FillingsTab implements TabController {
 
     armReset(panel.querySelector("#fil-reset") as HTMLButtonElement, "Ponastavi", () => {
       this.session.resetSection("fillings");
+      this.render();
+    });
+    armReset(panel.querySelector("#seal-reset") as HTMLButtonElement, "Ponastavi", () => {
+      this.session.resetSection("sealants");
       this.render();
     });
 
@@ -69,10 +91,14 @@ export class FillingsTab implements TabController {
     if (!this.panel) return;
     const host = this.panel.querySelector("#fil-chart") as HTMLElement;
     const score = this.panel.querySelector("#fil-score") as HTMLElement;
+    const sealHost = this.panel.querySelector("#seal-chart") as HTMLElement;
+    const sealScore = this.panel.querySelector("#seal-score") as HTMLElement;
 
     if (!this.session.hasSession()) {
       host.innerHTML = `<p class="placeholder-text">Ni aktivnega pregleda.</p>`;
       score.textContent = "";
+      sealHost.innerHTML = "";
+      sealScore.textContent = "";
       return;
     }
 
@@ -100,6 +126,31 @@ export class FillingsTab implements TabController {
           const current = s.fillings[t][surface];
           const next = current === this.brush ? "" : this.brush;
           this.session.setFilling(t, surface, next as FillingMaterial);
+          this.render();
+        },
+      })
+    );
+
+    sealScore.innerHTML =
+      `<strong>${sum.sealedTeeth}</strong> ` +
+      `${plural(sum.sealedTeeth, "zob", "zoba", "zobje", "zob")} z zalitimi fisurami ` +
+      `<span class="count-sub">(od ${sum.teethPresent} prisotnih)</span>`;
+
+    sealHost.innerHTML = "";
+    sealHost.appendChild(
+      buildChart({
+        mode: "whole",
+        isMissing: (t) => !this.session.isPresent(t),
+        isMarked: (t) => !!s.sealants[t],
+        toothTitle: (t) =>
+          !this.session.isPresent(t)
+            ? `Zob ${t} — manjka`
+            : s.sealants[t]
+              ? `Zob ${t} — fisure zalite`
+              : `Zob ${t} — fisure niso zalite`,
+        onTooth: (t) => {
+          if (!this.session.isPresent(t)) return;
+          this.session.toggleSealant(t);
           this.render();
         },
       })

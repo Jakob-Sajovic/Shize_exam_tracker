@@ -5,7 +5,7 @@ Office add-in, no account. Installs to a tablet home screen, works offline, expo
 
 UI language is **Slovenian**; code and comments are in English.
 
-> Prototype. The five measures below are what it tracks today — the model and the tab bar
+> Prototype. The measures below are what it tracks today — the model and the tab bar
 > are built to be extended.
 
 ## What it records
@@ -17,6 +17,8 @@ UI language is **Slovenian**; code and comments are in English.
 | **GBI** | Bleeding index, same chart over separate data | 4 |
 | **Karies** | Caries severity 1–6 per surface | 5 |
 | **Zalivke** | Filling material (kompozit / amalgam) per surface | 5 |
+| **Zalivke → Zalitje fisur** | Fissure sealant, yes/no | whole tooth |
+| **Izvoz** | Summary, `.xlsx` export, printable report (PDF) | — |
 
 Surfaces are `mesial`, `distal`, `buccal`, `oral` — plus `occlusal` for caries and fillings,
 where an occlusal lesion or restoration has to go somewhere. The oral surface is labelled
@@ -28,6 +30,7 @@ recorded on it, so a stale surface can't quietly inflate a denominator later.
 ## How entry works
 
 - **VPI / GBI** — tap a surface to toggle it.
+- **Zobje, Zalitje fisur** — tap a tooth to toggle it.
 - **Karies / Zalivke** — pick a grade or material in the toolbar, then tap surfaces to paint
   it. Tapping a surface that already carries the current brush clears it. On a tablet this
   beats opening a dropdown 160 times, and it matches how findings are actually called out.
@@ -39,10 +42,19 @@ Autosaves to **IndexedDB** 1.5 s after any change, and again on `pagehide` /
 `visibilitychange`. An exam exists **only on the device** until exported — the landing list
 flags un-exported sessions with a red *ni izvoženo* badge and a warning count.
 
-Export writes one `.xlsx` row per exam: 626 columns — metadata and computed indices, then
-per tooth presence + VPI (4) + GBI (4) + caries (5) + fillings (5) — followed by a `_json`
-backup column. Import prefers `_json` (lossless, survives column changes) and falls back to
+Export writes one `.xlsx` row per exam: 659 columns — metadata and computed indices, then
+per tooth presence + VPI (4) + GBI (4) + caries (5) + fillings (5) + sealant (1) — followed by a
+`_json` backup column. Import prefers `_json` (lossless, survives column changes) and falls back to
 the flat columns.
+
+## Report (PDF)
+
+`📄 Poročilo (PDF)` on the Izvoz tab opens the report in a new window and raises the print
+dialog; *Save as PDF* there is the PDF export. Same approach as the COMFORTage add-in — no PDF
+library. Charts are inline SVG using the same `surfaceAt()` mapping as the screen, and
+charts and tables are kept whole across page breaks.
+
+A user guide in Slovenian, with screenshots embedded, is in `navodila-za-uporabo.html`.
 
 ## Setup
 
@@ -84,9 +96,11 @@ src/
     tab-teeth.ts          tooth count
     tab-index.ts          VPI and GBI — one controller registered twice
     tab-caries.ts         caries, brush entry
-    tab-fillings.ts       fillings, brush entry
-    tab-export.ts         summary + .xlsx export
+    tab-fillings.ts       fillings, brush entry; fissure sealant yes/no chart below
+    tab-export.ts         summary, .xlsx export, report button
     reset-button.ts       two-tap confirmation helper
+  report/
+    report.ts             print-friendly HTML report → browser print → "Save as PDF"
   storage/
     idb.ts                minimal IndexedDB wrapper, no dependency
     codec.ts              PURE session <-> spreadsheet row (headers and row from one loop)
@@ -110,6 +124,7 @@ turns a screen position into an anatomical surface.
    `tabs/`, and register it in `app.ts`.
 4. Add its columns to `getColumnHeaders()` **and** `sessionToRow()` — they are generated from
    the same loop, so keep them together — plus the read side in `rowToSession()`.
+5. Add it to the report in `report/report.ts`, and to the summary card on the Izvoz tab.
 
 Old files keep opening: `normalizeSession()` fills in anything a stored session lacks.
 

@@ -191,12 +191,18 @@ html, body {
 }
 .tooth-box.present { background: #eff6fc; border-color: #0078d4; color: #0078d4; font-weight: 600; }
 .tooth-box.absent { background: #f3f2f1; border-color: #a19f9d; color: #a19f9d; font-size: 13px; }
+.tooth-box.unmarked { background: #fff; border-color: #8a8886; color: #605e5c; }
+.tooth-box.marked { background: #dff6dd; border-color: #107c10; color: #0b5a0b; font-weight: 700; }
+.tooth-cell.missing .tooth-box { cursor: default; }
 
 .legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 10px; font-size: 11.5px; color: #605e5c; }
 .legend-item { display: inline-flex; align-items: center; gap: 6px; }
 .legend-swatch { width: 13px; height: 13px; border-radius: 2px; border: 1px solid #8a8886; display: inline-block; }
 .legend-swatch.present { background: #eff6fc; border-color: #0078d4; }
 .legend-swatch.absent { background: #f3f2f1; }
+.legend-swatch.marked { background: #dff6dd; border-color: #107c10; }
+.legend-swatch.unmarked { background: #fff; }
+.sub-section { margin-top: 26px; padding-top: 18px; border-top: 1px solid #e1dfdd; }
 
 /* ===== Export ===== */
 .summary-card { background: #fff; border: 1px solid #edebe9; border-radius: 5px; padding: 11px 13px; margin-bottom: 9px; }
@@ -211,6 +217,7 @@ html, body {
 .export-status.ok { color: #0b6a0b; }
 .export-status.warn { color: #a4262c; }
 .export-status.muted { color: #605e5c; }
+.btn-report { margin-top: 10px; }
 
 /* ===== Narrow screens ===== */
 @media (max-width: 560px) {

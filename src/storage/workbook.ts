@@ -2,12 +2,13 @@ import * as XLSX from "xlsx";
 import { StatusSession } from "../model/types";
 import { SHEET_NAME, getColumnHeaders, sessionToRow, rowToSession } from "./codec";
 
-export function buildWorkbook(sessions: StatusSession[]): Uint8Array {
+export function buildWorkbook(sessions: StatusSession[]): ArrayBuffer {
   const headers = getColumnHeaders();
   const rows = sessions.map(sessionToRow);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([headers, ...rows]), SHEET_NAME);
-  return XLSX.write(wb, { bookType: "xlsx", type: "array" }) as Uint8Array;
+  // type "array" yields an ArrayBuffer, not a Uint8Array
+  return XLSX.write(wb, { bookType: "xlsx", type: "array" }) as ArrayBuffer;
 }
 
 export async function readWorkbook(file: File): Promise<StatusSession | null> {
@@ -35,8 +36,8 @@ export function workbookFileName(s: StatusSession): string {
 
 /** Hands the file to the user. iOS routes this through the share sheet rather
  *  than a downloads folder, so the anchor must be in the document when clicked. */
-export function downloadWorkbook(bytes: Uint8Array, fileName: string): void {
-  const blob = new Blob([bytes.slice().buffer as ArrayBuffer], {
+export function downloadWorkbook(bytes: ArrayBuffer, fileName: string): void {
+  const blob = new Blob([bytes], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   });
   const url = URL.createObjectURL(blob);

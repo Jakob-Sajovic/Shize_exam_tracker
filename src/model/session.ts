@@ -30,6 +30,7 @@ export function makeEmptySession(): StatusSession {
   const bleeding: Record<Fdi, PbToothData> = {};
   const caries: Record<Fdi, CariesToothData> = {};
   const fillings: Record<Fdi, FillingToothData> = {};
+  const sealants: Record<Fdi, boolean> = {};
 
   for (const t of ALL_TEETH) {
     present[t] = true;
@@ -37,6 +38,7 @@ export function makeEmptySession(): StatusSession {
     bleeding[t] = makePb();
     caries[t] = makeCaries();
     fillings[t] = makeFillings();
+    sealants[t] = false;
   }
 
   return {
@@ -49,6 +51,7 @@ export function makeEmptySession(): StatusSession {
     bleeding,
     caries,
     fillings,
+    sealants,
   };
 }
 
@@ -65,6 +68,7 @@ export function normalizeSession(raw: Partial<StatusSession>): StatusSession {
     bleeding: { ...base.bleeding },
     caries: { ...base.caries },
     fillings: { ...base.fillings },
+    sealants: { ...base.sealants, ...(raw.sealants || {}) },
   };
   for (const t of ALL_TEETH) {
     if (raw.plaque?.[t]) s.plaque[t] = { ...base.plaque[t], ...raw.plaque[t] };
@@ -88,6 +92,7 @@ export interface Summary {
   fillingSurfaces: number;
   fillingComposite: number;
   fillingAmalgam: number;
+  sealedTeeth: number;
 }
 
 /** Every index counts present teeth only — an extracted tooth has no surfaces
@@ -101,10 +106,12 @@ export function summarize(s: StatusSession): Summary {
   let fillingSurfaces = 0;
   let fillingComposite = 0;
   let fillingAmalgam = 0;
+  let sealedTeeth = 0;
 
   for (const t of ALL_TEETH) {
     if (!s.present[t]) continue;
     teethPresent++;
+    if (s.sealants[t]) sealedTeeth++;
 
     for (const surf of PB_SURFACES) {
       if (s.plaque[t][surf]) vpiMarked++;
@@ -143,6 +150,7 @@ export function summarize(s: StatusSession): Summary {
     fillingSurfaces,
     fillingComposite,
     fillingAmalgam,
+    sealedTeeth,
   };
 }
 
@@ -216,6 +224,7 @@ export class SessionState {
       s.bleeding[tooth] = makePb();
       s.caries[tooth] = makeCaries();
       s.fillings[tooth] = makeFillings();
+      s.sealants[tooth] = false;
     }
     this.touch();
   }
@@ -241,13 +250,21 @@ export class SessionState {
     this.touch();
   }
 
-  resetSection(section: "present" | "plaque" | "bleeding" | "caries" | "fillings"): void {
+  toggleSealant(tooth: Fdi): void {
+    const s = this.get();
+    if (!s.present[tooth]) return;
+    s.sealants[tooth] = !s.sealants[tooth];
+    this.touch();
+  }
+
+  resetSection(section: "present" | "plaque" | "bleeding" | "caries" | "fillings" | "sealants"): void {
     const s = this.get();
     for (const t of ALL_TEETH) {
       if (section === "present") s.present[t] = true;
       else if (section === "plaque") s.plaque[t] = makePb();
       else if (section === "bleeding") s.bleeding[t] = makePb();
       else if (section === "caries") s.caries[t] = makeCaries();
+      else if (section === "sealants") s.sealants[t] = false;
       else s.fillings[t] = makeFillings();
     }
     this.touch();

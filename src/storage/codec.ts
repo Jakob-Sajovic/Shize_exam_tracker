@@ -10,7 +10,7 @@ export const SHEET_NAME = "ZobniStatus";
  * generate both from the same loop.
  *
  * Layout: metadata, then per tooth — presence, VPI (4), GBI (4), caries (5),
- * fillings (5) — then a JSON backup column that makes re-import lossless even
+ * fillings (5), fissure sealant — then a JSON backup column that makes re-import lossless even
  * if the flat columns fall behind the model.
  */
 
@@ -32,6 +32,7 @@ const META_HEADERS = [
   "zalivke_ploskev",
   "zalivke_kompozit",
   "zalivke_amalgam",
+  "zalitje_fisur_zob",
 ];
 
 export function getColumnHeaders(): string[] {
@@ -42,6 +43,7 @@ export function getColumnHeaders(): string[] {
     for (const s of PB_SURFACES) headers.push(`t${t}_gbi_${SURFACE_KEY[s]}`);
     for (const s of FULL_SURFACES) headers.push(`t${t}_kar_${SURFACE_KEY[s]}`);
     for (const s of FULL_SURFACES) headers.push(`t${t}_zal_${SURFACE_KEY[s]}`);
+    headers.push(`t${t}_zalitje_fisur`);
   }
   headers.push("_json");
   return headers;
@@ -67,6 +69,7 @@ export function sessionToRow(s: StatusSession): (string | number)[] {
     sum.fillingSurfaces,
     sum.fillingComposite,
     sum.fillingAmalgam,
+    sum.sealedTeeth,
   ];
 
   for (const t of ALL_TEETH) {
@@ -75,6 +78,7 @@ export function sessionToRow(s: StatusSession): (string | number)[] {
     for (const surf of PB_SURFACES) row.push(s.bleeding[t][surf] ? 1 : 0);
     for (const surf of FULL_SURFACES) row.push(s.caries[t][surf]);
     for (const surf of FULL_SURFACES) row.push(s.fillings[t][surf]);
+    row.push(s.sealants[t] ? 1 : 0);
   }
 
   row.push(JSON.stringify(s));
@@ -122,6 +126,7 @@ export function rowToSession(headers: string[], row: (string | number)[]): Statu
       const m = String(at(`t${t}_zal_${SURFACE_KEY[surf]}`) || "");
       s.fillings[t][surf] = (m === "kompozit" || m === "amalgam" ? m : "") as FillingMaterial;
     }
+    s.sealants[t] = num(at(`t${t}_zalitje_fisur`)) === 1;
   }
   return s;
 }

@@ -127,6 +127,9 @@ export interface ChartOptions {
   onTooth?(tooth: Fdi): void;
   /** Tooltip for a whole tooth box. */
   toothTitle?(tooth: Fdi): string;
+  /** Yes/no picker on the whole-tooth chart: present teeth are drawn marked or
+   *  unmarked instead of the plain "present" style. */
+  isMarked?(tooth: Fdi): boolean;
 }
 
 /**
@@ -185,7 +188,8 @@ function toothRow(teeth: Fdi[], opts: ChartOptions): HTMLElement {
     if (opts.mode === "whole") {
       const box = document.createElement("button");
       box.type = "button";
-      box.className = "tooth-box" + (missing ? " absent" : " present");
+      const state = missing ? "absent" : opts.isMarked ? (opts.isMarked(tooth) ? "marked" : "unmarked") : "present";
+      box.className = `tooth-box ${state}`;
       box.textContent = missing ? "✕" : String(tooth);
       if (opts.toothTitle) box.title = opts.toothTitle(tooth);
       box.addEventListener("click", () => opts.onTooth?.(tooth));
