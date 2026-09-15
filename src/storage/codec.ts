@@ -20,6 +20,7 @@ const META_HEADERS = [
   "datum",
   "izvajalec",
   "opomba",
+  "diagnosticne_opombe",
   "ustvarjeno",
   "spremenjeno",
   "st_prisotnih_zob",
@@ -57,6 +58,7 @@ export function sessionToRow(s: StatusSession): (string | number)[] {
     s.subject.date,
     s.subject.examiner,
     s.subject.note,
+    s.diagnosticNotes,
     s.createdAt,
     s.modifiedAt,
     sum.teethPresent,
@@ -114,6 +116,7 @@ export function rowToSession(headers: string[], row: (string | number)[]): Statu
       examiner: String(at("izvajalec") || ""),
       note: String(at("opomba") || ""),
     },
+    diagnosticNotes: String(at("diagnosticne_opombe") || ""),
   });
 
   for (const t of ALL_TEETH) {

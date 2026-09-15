@@ -13,17 +13,64 @@ import { surfaceAt, Pos5 } from "../dental/chart";
 import { summarize } from "../model/session";
 import { plural } from "../model/plural";
 
+let closeActive: (() => void) | null = null;
+
 /**
- * Print-friendly report, opened in a new window with the print dialog raised.
- * "Save as PDF" in that dialog is the PDF export — no PDF library needed.
+ * Shows the report as a full-screen layer inside the app, printed with the
+ * app's own window.print() — "Save as PDF" in that dialog is the PDF export.
+ *
+ * Deliberately not a new window: an installed app on iOS hands window.open to
+ * Safari, and from there there is no way back into the app.
  */
 export function openReport(session: StatusSession): void {
-  const win = window.open("", "_blank");
-  if (!win) {
-    throw new Error("Brskalnik je blokiral odpiranje novega okna. Dovolite pojavna okna za to stran.");
+  closeActive?.();
+
+  const overlay = document.createElement("div");
+  overlay.className = "report-overlay";
+  overlay.innerHTML = `
+    <div class="report-toolbar">
+      <button type="button" class="btn btn-secondary" data-act="close">← Nazaj</button>
+      <span class="report-toolbar-title">Poročilo</span>
+      <button type="button" class="btn btn-primary" data-act="print">🖨 Natisni / PDF</button>
+    </div>
+    <div class="report-scroll"><div class="report-sheet"></div></div>`;
+
+  // Shadow root keeps the report's print styles and the app's styles apart.
+  const sheet = overlay.querySelector(".report-sheet") as HTMLElement;
+  sheet.attachShadow({ mode: "open" }).innerHTML = `<style>${REPORT_CSS}</style>${buildReportBody(session)}`;
+
+  const previousTitle = document.title;
+  // The print dialog proposes the document title as the PDF file name.
+  document.title = reportFileTitle(session);
+  document.body.classList.add("report-open");
+  document.body.appendChild(overlay);
+
+  const remove = () => {
+    window.removeEventListener("popstate", onPop);
+    overlay.remove();
+    document.body.classList.remove("report-open");
+    document.title = previousTitle;
+    closeActive = null;
+  };
+  const onPop = () => remove();
+
+  // A history entry lets the Android back button / back gesture close the report.
+  let pushed = false;
+  try {
+    history.pushState({ report: true }, "");
+    pushed = true;
+    window.addEventListener("popstate", onPop);
+  } catch {
+    /* no history API — the Nazaj button still works */
   }
-  win.document.write(buildReportHtml(session));
-  win.document.close();
+  closeActive = () => (pushed ? history.back() : remove());
+
+  overlay.querySelector('[data-act="close"]')?.addEventListener("click", () => closeActive?.());
+  overlay.querySelector('[data-act="print"]')?.addEventListener("click", () => window.print());
+}
+
+function reportFileTitle(s: StatusSession): string {
+  return `ZobniStatus_${(s.subject.code || "pregled").replace(/[^\w\-.]+/g, "_")}_${s.subject.date || "brez-datuma"}`;
 }
 
 function esc(str: string): string {
@@ -37,13 +84,11 @@ function esc(str: string): string {
 const PLAQUE_COLOR = "#ffd335";
 const BLEEDING_COLOR = "#d13438";
 
-export function buildReportHtml(s: StatusSession): string {
+export function buildReportBody(s: StatusSession): string {
   const sub = s.subject;
   const sum = summarize(s);
   const missing = ALL_TEETH.filter((t) => !s.present[t]).sort((a, b) => a - b);
   const sealed = ALL_TEETH.filter((t) => s.present[t] && s.sealants[t]).sort((a, b) => a - b);
-  // The print dialog proposes the document title as the PDF file name.
-  const fileTitle = `ZobniStatus_${(sub.code || "pregled").replace(/[^\w\-.]+/g, "_")}_${sub.date || "brez-datuma"}`;
 
   const cariesColor = (t: Fdi, surf: FullSurface) => {
     const g = s.caries[t][surf];
@@ -56,14 +101,7 @@ export function buildReportHtml(s: StatusSession): string {
   const fillingLetter = (t: Fdi, surf: FullSurface) =>
     s.fillings[t][surf] === "kompozit" ? "K" : s.fillings[t][surf] === "amalgam" ? "A" : "";
 
-  return `<!DOCTYPE html>
-<html lang="sl">
-<head>
-<meta charset="UTF-8">
-<title>${esc(fileTitle)}</title>
-<style>${REPORT_CSS}</style>
-</head>
-<body>
+  return `
 <div class="report">
   <header class="report-header">
     <h1>Zobni status</h1>
@@ -139,6 +177,11 @@ export function buildReportHtml(s: StatusSession): string {
     </div>
   </section>
 
+  <section class="section keep">
+    <h2>Diagnostične opombe</h2>
+    <div class="notes-content">${esc((s.diagnosticNotes || "").trim() || "—")}</div>
+  </section>
+
   <!-- Note, signatures and footer travel together so a signature never sits alone on a page -->
   <div class="keep">
   <section class="section">
@@ -165,10 +208,7 @@ export function buildReportHtml(s: StatusSession): string {
     Zobni status — UKC Shize 2025 · Ustvarjeno: ${new Date().toLocaleString("sl-SI")}
   </footer>
   </div>
-</div>
-<script>window.onload = function () { window.print(); };<\/script>
-</body>
-</html>`;
+</div>`;
 }
 
 function onTeeth(n: number): string {
@@ -361,8 +401,7 @@ function toothSvg(
 
 const REPORT_CSS = `
 * { box-sizing: border-box; margin: 0; padding: 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-@page { size: A4; margin: 12mm; }
-body { font-family: "Segoe UI", -apple-system, Roboto, sans-serif; font-size: 11px; color: #1a1a1a; background: #fff; padding: 16px; }
+.report { font-family: "Segoe UI", -apple-system, Roboto, sans-serif; font-size: 11px; line-height: normal; color: #1a1a1a; background: #fff; padding: 16px; }
 .report { max-width: 900px; margin: 0 auto; }
 .report-header { border-bottom: 2px solid #0078d4; padding-bottom: 12px; margin-bottom: 16px; }
 .report-header h1 { font-size: 20px; color: #0078d4; margin-bottom: 8px; }
@@ -394,6 +433,6 @@ th { background: #f0f0f0; font-weight: 600; }
 .signature-label { font-size: 10px; color: #555; text-align: center; }
 .report-footer { margin-top: 20px; padding-top: 8px; border-top: 1px solid #d0d0d0; font-size: 10px; color: #888; text-align: right; }
 @media print {
-  body { padding: 0; }
+  .report { padding: 0; max-width: none; }
 }
 `;

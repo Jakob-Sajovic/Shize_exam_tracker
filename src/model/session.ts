@@ -52,6 +52,7 @@ export function makeEmptySession(): StatusSession {
     caries,
     fillings,
     sealants,
+    diagnosticNotes: "",
   };
 }
 
@@ -207,6 +208,11 @@ export class SessionState {
 
   setSubjectField<K extends keyof StatusSession["subject"]>(key: K, value: string): void {
     this.get().subject[key] = value;
+    this.touch();
+  }
+
+  setDiagnosticNotes(text: string): void {
+    this.get().diagnosticNotes = text;
     this.touch();
   }
 

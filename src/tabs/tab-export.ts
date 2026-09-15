@@ -22,8 +22,8 @@ export class ExportTab implements TabController {
         <button type="button" id="btn-report" class="btn btn-secondary btn-large btn-report">📄 Poročilo (PDF)</button>
         <p class="tab-help">
           Pregled se med vnašanjem samodejno shranjuje v napravo. Zgornji gumb prenese
-          datoteko .xlsx — eno vrstico na pregled, primerno za nadaljnjo obdelavo. Spodnji odpre
-          poročilo za tiskanje; v oknu za tiskanje izberite <strong>Shrani kot PDF</strong>.
+          datoteko .xlsx — eno vrstico na pregled, primerno za nadaljnjo obdelavo. Spodnji prikaže
+          poročilo; tapnite <strong>Natisni / PDF</strong> in izberite <strong>Shrani kot PDF</strong>.
         </p>
       </div>
     `;
@@ -64,7 +64,7 @@ export class ExportTab implements TabController {
     if (!this.session.hasSession()) return;
     try {
       openReport(this.session.get());
-      this.setStatus("Poročilo je odprto v novem oknu. V oknu za tiskanje izberite »Shrani kot PDF«.", "ok");
+      this.setStatus("", "muted");
     } catch (err) {
       this.setStatus(`Napaka: ${err instanceof Error ? err.message : String(err)}`, "warn");
     }

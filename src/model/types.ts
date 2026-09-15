@@ -38,6 +38,8 @@ export interface StatusSession {
   fillings: Record<Fdi, FillingToothData>;
   /** Fissure sealant present on the tooth (zalitje fisur) — whole tooth, yes/no. */
   sealants: Record<Fdi, boolean>;
+  /** Free-text diagnostic observations (Diagnostične opombe tab). */
+  diagnosticNotes: string;
 }
 
 /** What the landing list shows about a locally stored session. */

@@ -18,6 +18,7 @@ UI language is **Slovenian**; code and comments are in English.
 | **Karies** | Caries severity 1–6 per surface | 5 |
 | **Zalivke** | Filling material (kompozit / amalgam) per surface | 5 |
 | **Zalivke → Zalitje fisur** | Fissure sealant, yes/no | whole tooth |
+| **Diagnostične opombe** | Free-text diagnostic observations | — |
 | **Izvoz** | Summary, `.xlsx` export, printable report (PDF) | — |
 
 Surfaces are `mesial`, `distal`, `buccal`, `oral` — plus `occlusal` for caries and fillings,
@@ -42,15 +43,19 @@ Autosaves to **IndexedDB** 1.5 s after any change, and again on `pagehide` /
 `visibilitychange`. An exam exists **only on the device** until exported — the landing list
 flags un-exported sessions with a red *ni izvoženo* badge and a warning count.
 
-Export writes one `.xlsx` row per exam: 659 columns — metadata and computed indices, then
+Export writes one `.xlsx` row per exam: 660 columns — metadata (including the diagnostic notes)
+and computed indices, then
 per tooth presence + VPI (4) + GBI (4) + caries (5) + fillings (5) + sealant (1) — followed by a
 `_json` backup column. Import prefers `_json` (lossless, survives column changes) and falls back to
 the flat columns.
 
 ## Report (PDF)
 
-`📄 Poročilo (PDF)` on the Izvoz tab opens the report in a new window and raises the print
-dialog; *Save as PDF* there is the PDF export. Same approach as the COMFORTage add-in — no PDF
+`📄 Poročilo (PDF)` on the Izvoz tab shows the report as a full-screen layer inside the app
+(`← Nazaj` / `🖨 Natisni / PDF`), printed with the app's own `window.print()`; *Save as PDF*
+there is the PDF export. Not a new window on purpose: an installed app on iOS hands
+`window.open` to Safari, with no way back into the app. The report lives in a shadow root so
+its styles and the app's stay apart, and a print stylesheet hides the app while it prints. Same approach as the COMFORTage add-in — no PDF
 library. Charts are inline SVG using the same `surfaceAt()` mapping as the screen, and
 charts and tables are kept whole across page breaks.
 
@@ -97,10 +102,11 @@ src/
     tab-index.ts          VPI and GBI — one controller registered twice
     tab-caries.ts         caries, brush entry
     tab-fillings.ts       fillings, brush entry; fissure sealant yes/no chart below
+    tab-diagnosis.ts      free-text diagnostic notes
     tab-export.ts         summary, .xlsx export, report button
     reset-button.ts       two-tap confirmation helper
   report/
-    report.ts             print-friendly HTML report → browser print → "Save as PDF"
+    report.ts             in-app report layer → window.print() → "Save as PDF"
   storage/
     idb.ts                minimal IndexedDB wrapper, no dependency
     codec.ts              PURE session <-> spreadsheet row (headers and row from one loop)

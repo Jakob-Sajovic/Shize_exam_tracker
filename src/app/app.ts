@@ -8,6 +8,7 @@ import { TeethTab } from "../tabs/tab-teeth";
 import { IndexTab } from "../tabs/tab-index";
 import { CariesTab } from "../tabs/tab-caries";
 import { FillingsTab } from "../tabs/tab-fillings";
+import { DiagnosisTab } from "../tabs/tab-diagnosis";
 import { ExportTab } from "../tabs/tab-export";
 
 const AUTOSAVE_DEBOUNCE_MS = 1500;
@@ -32,6 +33,7 @@ function initApp(): void {
   tabManager.registerController("bleeding", new IndexTab(session, "bleeding"));
   tabManager.registerController("caries", new CariesTab(session));
   tabManager.registerController("fillings", new FillingsTab(session));
+  tabManager.registerController("diagnosis", new DiagnosisTab(session));
   tabManager.registerController("export", new ExportTab(session, store));
 
   const buildEl = document.getElementById("build-id");

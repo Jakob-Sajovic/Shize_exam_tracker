@@ -81,5 +81,6 @@ export const TABS: TabDef[] = [
   { id: "bleeding", label: "GBI", icon: "🔴" },
   { id: "caries", label: "Karies", icon: "🔍" },
   { id: "fillings", label: "Zalivke", icon: "⬜" },
+  { id: "diagnosis", label: "Diagnostične opombe", icon: "📝" },
   { id: "export", label: "Izvoz", icon: "💾" },
 ];
