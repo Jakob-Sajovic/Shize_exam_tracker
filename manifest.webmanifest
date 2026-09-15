@@ -1,0 +1,17 @@
+{
+  "name": "Zobni status — UKC Shize 2025",
+  "short_name": "Zobni status",
+  "description": "Vnos zobnega statusa: število zob, VPI, GBI, karies, zalivke",
+  "lang": "sl",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#faf9f8",
+  "theme_color": "#0078d4",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
