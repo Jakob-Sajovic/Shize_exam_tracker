@@ -22,9 +22,16 @@ module.exports = (env, options) => {
     output: {
       path: path.resolve(__dirname, "dist"),
       filename: "[name].js",
+      // Named, stable chunk files so the service worker can pre-cache pdf.js
+      chunkFilename: "[name].js",
       clean: true,
     },
     resolve: { extensions: [".ts", ".js"] },
+    // Keep jsPDF inside pdf.js instead of a numbered vendor chunk, so the one
+    // file the service worker pre-caches is all the PDF export needs offline.
+    // (jsPDF's own optional imports — html2canvas, canvg, dompurify — still
+    // split out; the report never calls the features that load them.)
+    optimization: { splitChunks: { cacheGroups: { defaultVendors: false, default: false } } },
     module: {
       rules: [
         { test: /\.ts$/, exclude: /node_modules/, use: "babel-loader" },

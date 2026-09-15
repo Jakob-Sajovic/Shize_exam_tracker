@@ -51,13 +51,26 @@ the flat columns.
 
 ## Report (PDF)
 
-`📄 Poročilo (PDF)` on the Izvoz tab shows the report as a full-screen layer inside the app
-(`← Nazaj` / `🖨 Natisni / PDF`), printed with the app's own `window.print()`; *Save as PDF*
-there is the PDF export. Not a new window on purpose: an installed app on iOS hands
-`window.open` to Safari, with no way back into the app. The report lives in a shadow root so
-its styles and the app's stay apart, and a print stylesheet hides the app while it prints. Same approach as the COMFORTage add-in — no PDF
-library. Charts are inline SVG using the same `surfaceAt()` mapping as the screen, and
-charts and tables are kept whole across page breaks.
+`📄 Poročilo (PDF)` on the Izvoz tab shows the report as a full-screen layer inside the app.
+Not a new window on purpose: an installed app on iOS hands `window.open` to Safari, with no way
+back into the app.
+
+The PDF itself is **generated in the browser** with jsPDF — `window.print()` does nothing in an
+app installed to the iOS home screen. On iOS/iPadOS the file goes to the share sheet
+(`navigator.share` with files: Save to Files, Print, Mail); elsewhere it downloads, and
+`🖨 Natisni` (printing the layer) stays available. iOS only opens the share sheet from inside
+the tap, so the PDF is built as soon as the report opens and the button enables when it is ready.
+
+```
+report/model.ts    what the report says: texts, tables, chart drawing primitives
+report/html.ts     model → HTML for the in-app view (in a shadow root)
+report/pdf.ts      model → vector A4 PDF (jsPDF + jspdf-autotable), loaded on demand as pdf.js
+report/report.ts   the layer, its buttons, share vs. download
+report/fonts.ts    DejaVu Sans subset, embedded — the standard PDF fonts cannot encode č
+```
+
+Both renderers draw the same model, so the screen and the PDF cannot drift apart. `pdf.js` is a
+named chunk pre-cached by the service worker, so the PDF also works offline.
 
 A user guide in Slovenian, with screenshots embedded, is in `navodila-za-uporabo.html`.
 

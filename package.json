@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "core-js": "^3.36.0",
+    "jspdf": "^4.2.1",
+    "jspdf-autotable": "^5.0.8",
     "regenerator-runtime": "^0.14.1",
     "xlsx": "^0.18.5"
   },
@@ -30,6 +32,11 @@
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.1.0"
   },
-  "engines": { "node": ">=16" },
-  "browserslist": ["last 2 versions", "not dead"]
+  "engines": {
+    "node": ">=16"
+  },
+  "browserslist": [
+    "last 2 versions",
+    "not dead"
+  ]
 }

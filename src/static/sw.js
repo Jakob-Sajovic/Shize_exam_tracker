@@ -6,7 +6,8 @@
  */
 const BUILD = self.__BUILD_ID__ || "dev";
 const CACHE = "ukc-shize-" + BUILD;
-const SHELL = ["./", "index.html", "app.js", "manifest.webmanifest", "icons/icon-192.png"];
+// pdf.js is loaded only when a report is opened; pre-cache it so the PDF works offline too.
+const SHELL = ["./", "index.html", "app.js", "pdf.js", "manifest.webmanifest", "icons/icon-192.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
